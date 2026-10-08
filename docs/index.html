@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; base-uri 'none'; form-action 'none'">
+<meta charset="utf-8">
+<title>Kessai Mock</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; width: 1280px; height: 720px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #0f1724; color: #e6edf3;
+  }
+  .header { padding: 24px 40px 10px; }
+  .header h1 { margin: 0; font-size: 30px; color: #4fd1c5; }
+  .header p { margin: 4px 0 0; color: #9fb3c8; font-size: 14px; }
+  .tabs { display: flex; gap: 10px; padding: 0 40px; margin-top: 16px; }
+  .tab {
+    padding: 10px 22px; border-radius: 8px 8px 0 0; cursor: pointer;
+    background: #1b2838; color: #9fb3c8; font-size: 14px; font-weight: 600;
+  }
+  .tab.active { background: #16222f; color: #4fd1c5; border-bottom: 3px solid #4fd1c5; }
+  .panel {
+    margin: 0 40px; background: #16222f; border-radius: 0 10px 10px 10px;
+    padding: 28px 36px; min-height: 480px; display: none;
+  }
+  .panel.active { display: block; }
+  .card {
+    background: #1b2838; border: 1px solid #27384a; border-radius: 10px;
+    padding: 20px 26px; max-width: 560px; margin-bottom: 20px;
+  }
+  .card h3 { margin: 0 0 10px; font-size: 18px; color: #e6edf3; }
+  .row { display: flex; justify-content: space-between; font-size: 14px; color: #9fb3c8; margin: 4px 0; }
+  .status { font-weight: 700; color: #f6c453; }
+  .status.paid { color: #4fd1c5; }
+  button {
+    margin-top: 14px; padding: 10px 20px; border: none; border-radius: 8px;
+    background: #4fd1c5; color: #0f1724; font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  button:disabled { background: #2b3b4a; color: #6b7f93; cursor: default; }
+  .hint { font-size: 12px; color: #6b7f93; margin-top: 10px; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 18px; max-width: 900px; }
+  .stat { background: #1b2838; border: 1px solid #27384a; border-radius: 10px; padding: 18px; text-align: center; }
+  .stat .label { font-size: 12px; color: #9fb3c8; }
+  .stat .value { font-size: 24px; font-weight: 700; color: #4fd1c5; margin-top: 6px; }
+  footer { position: absolute; bottom: 10px; left: 40px; font-size: 12px; color: #5a6c7d; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Kessai</h1>
+  <p>Instant stablecoin invoice settlement for Japanese SMEs — funded by a 10M yen liquidity pool</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-demo="tab-sme" onclick="showPanel('sme')">SME Dashboard</div>
+  <div class="tab" data-demo="tab-lp" onclick="showPanel('lp')">LP Dashboard</div>
+</div>
+
+<div class="panel active" id="panel-sme" data-demo="panel-sme">
+  <div class="card">
+    <h3>Invoice #1042 — Tokyo Trading Co.</h3>
+    <div class="row"><span>Amount</span><span>¥500,000</span></div>
+    <div class="row"><span>Due Date</span><span>45 days</span></div>
+    <div class="row"><span>Status</span><span class="status" id="invoice-status" data-demo="invoice-status">Pending Verification</span></div>
+    <button data-demo="verify-btn" onclick="verifyInvoice()">Verify &amp; Mint Invoice NFT</button>
+    <div class="hint" id="mint-status" data-demo="mint-status"></div>
+    <button data-demo="payout-btn" onclick="payout()" disabled id="payout-btn-el">Request Instant Payout</button>
+    <div class="hint" id="payout-status" data-demo="payout-status"></div>
+  </div>
+</div>
+
+<div class="panel" id="panel-lp" data-demo="panel-lp">
+  <div class="stat-grid">
+    <div class="stat"><div class="label">Pool Size</div><div class="value" id="pool-size" data-demo="pool-size">¥10,000,000</div></div>
+    <div class="stat"><div class="label">Current Yield</div><div class="value" id="yield-rate" data-demo="yield-rate">8.2% APY</div></div>
+    <div class="stat"><div class="label">Active Loans</div><div class="value" id="active-loans" data-demo="active-loans">3</div></div>
+    <div class="stat"><div class="label">Risk Exposure</div><div class="value" id="risk-level" data-demo="risk-level">Low</div></div>
+  </div>
+  <button data-demo="simulate-btn" onclick="simulate()" style="margin-top:28px;">Simulate New Advance</button>
+  <div class="hint">Liquidity providers earn a discount fee each time an invoice is repaid on its due date.</div>
+</div>
+
+<footer>Prototype — all data is simulated</footer>
+
+<script>
+function showPanel(name) {
+  document.getElementById('panel-sme').classList.toggle('active', name === 'sme');
+  document.getElementById('panel-lp').classList.toggle('active', name === 'lp');
+  document.querySelector('[data-demo="tab-sme"]').classList.toggle('active', name === 'sme');
+  document.querySelector('[data-demo="tab-lp"]').classList.toggle('active', name === 'lp');
+}
+
+function verifyInvoice() {
+  document.getElementById('invoice-status').textContent = 'Minted ✓ On-Chain Claim';
+  document.getElementById('mint-status').textContent = 'Invoice NFT minted via Metaplex on Solana.';
+  document.getElementById('payout-btn-el').disabled = false;
+}
+
+function payout() {
+  document.getElementById('invoice-status').textContent = 'Paid Instantly';
+  document.getElementById('invoice-status').classList.add('paid');
+  document.getElementById('payout-status').textContent = '✅ 495,000 USDC sent to SME wallet (5,000 discount fee to pool).';
+}
+
+function simulate() {
+  document.getElementById('pool-size').textContent = '¥9,200,000';
+  document.getElementById('yield-rate').textContent = '9.1% APY';
+  document.getElementById('active-loans').textContent = '4';
+  document.getElementById('risk-level').textContent = 'Low-Med';
+}
+</script>
+</body>
+</html>
